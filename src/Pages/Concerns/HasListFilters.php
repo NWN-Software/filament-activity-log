@@ -2,6 +2,8 @@
 
 namespace Noxo\FilamentActivityLog\Pages\Concerns;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Exception;
 use Filament\Forms\Components\Select;
@@ -66,7 +68,7 @@ trait HasListFilters
         );
     }
 
-    public function applyFilters(Eloquent\Builder $query): Eloquent\Builder
+    public function applyFilters(Builder $query): Builder
     {
         $state = $this->form->getState();
         $causer = with($state['causer'], function ($causer) {
@@ -87,23 +89,23 @@ trait HasListFilters
         $query
             ->when(
                 $date_range = $this->getDateRange($state['date_range'] ?? null),
-                fn (Eloquent\Builder $query) => $query->whereBetween('created_at', $date_range)
+                fn (Builder $query) => $query->whereBetween('created_at', $date_range)
             )
             ->unless(
                 empty($causer),
-                fn (Eloquent\Builder $query) => $query->where($causer)
+                fn (Builder $query) => $query->where($causer)
             )
             ->unless(
                 empty($state['subject_type']),
-                fn (Eloquent\Builder $query) => $query->where('subject_type', $state['subject_type'])
+                fn (Builder $query) => $query->where('subject_type', $state['subject_type'])
             )
             ->unless(
                 empty($state['subject_id']),
-                fn (Eloquent\Builder $query) => $query->where('subject_id', $state['subject_id'])
+                fn (Builder $query) => $query->where('subject_id', $state['subject_id'])
             )
             ->unless(
                 empty($state['event']),
-                fn (Eloquent\Builder $query) => $query->where('event', $state['event'])
+                fn (Builder $query) => $query->where('event', $state['event'])
             );
 
         return $query;
@@ -144,7 +146,7 @@ trait HasListFilters
                 $causers = Activity::query()
                     ->groupBy('causer_id', 'causer_type')
                     ->get(['causer_id', 'causer_type'])
-                    ->filter(fn ($activity) => $activity->causer instanceof Eloquent\Model)
+                    ->filter(fn ($activity) => $activity->causer instanceof Model)
                     ->map(fn ($activity) => [
                         'value' => "{$activity->causer_type}:{$activity->causer_id}",
                         'label' => Blade::render(
