@@ -2,6 +2,9 @@
 
 namespace Noxo\FilamentActivityLog\Pages;
 
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder;
 use Noxo\FilamentActivityLog\Pages\Concerns\CanCollapse;
 use Noxo\FilamentActivityLog\Pages\Concerns\HasListFilters;
 use Noxo\FilamentActivityLog\Pages\Concerns\HasLogger;
@@ -84,5 +87,18 @@ abstract class ListActivities extends Page implements HasForms
     protected function getTableRecordsPerPageSelectOptions(): array
     {
         return [10, 25, 50];
+    }
+
+    protected function paginateTableQuery(Builder $query): Paginator | CursorPaginator
+    {
+        $perPage = $this->getTableRecordsPerPage() ?? $this->getDefaultTableRecordsPerPageSelectOption();
+
+        $total = $query->toBase()->getCountForPagination();
+
+        return $query->paginate(
+            perPage: ($perPage === 'all') ? $total : $perPage,
+            pageName: $this->getTablePaginationPageName(),
+            total: $total,
+        )->onEachSide(0);
     }
 }
